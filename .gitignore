@@ -1,0 +1,21 @@
+﻿node_modules/
+.next/
+out/
+build/
+.netlify/
+.env
+.env.*
+!.env.example
+*.tsbuildinfo
+.DS_Store
+
+env.txt
+env (1).txt
+
+# Temporary catalogue extraction files
+live-category-pages/
+live-product-pages/
+existing-products.json
+furnikart-*.csv
+inspect-catalog.mjs
+test-product-card.html

@@ -1,0 +1,16 @@
+export const categories = [
+  { name: 'Sofas & Couches', slug: 'sofas', image: '/images/sofa.jpg', caption: 'Sink into something good' },
+  { name: 'Beds & Mattresses', slug: 'beds', image: '/images/bed.jpg', caption: 'Your best sleep starts here' },
+  { name: 'Wardrobes', slug: 'wardrobes', image: '/images/wardrobe.jpg', caption: 'A place for everything' },
+  { name: 'Dining Tables', slug: 'dining', image: '/images/dining.jpg', caption: 'Make room for together' },
+  { name: 'Office Furniture', slug: 'office', image: '/images/desk.jpg', caption: 'Work, in your element' },
+  { name: 'Study Tables', slug: 'study-tables', image: '/images/desk.jpg', caption: 'Space for bright ideas' },
+  { name: 'Chairs', slug: 'chairs', image: '/images/lounge.jpg', caption: 'Your favourite seat' },
+  { name: 'Coffee Tables', slug: 'coffee-tables', image: '/images/coffee.jpg', caption: 'Bring your room together' },
+  { name: 'TV Units', slug: 'tv-units', image: '/images/room.jpg', caption: 'A beautiful focal point' },
+  { name: 'Bookshelves', slug: 'bookshelves', image: '/images/shelf.jpg', caption: 'Stories worth displaying' },
+  { name: 'Shoe Racks', slug: 'shoe-racks', image: '/images/wardrobe.jpg', caption: 'A lovely welcome home' },
+  { name: 'Storage Furniture', slug: 'storage', image: '/images/shelf.jpg', caption: 'Less clutter, more calm' },
+  { name: 'Outdoor Furniture', slug: 'outdoor', image: '/images/outdoor.jpg', caption: 'Take the comfort outside' },
+  { name: 'Kitchen Furniture', slug: 'kitchen', image: '/images/kitchen.jpg', caption: 'The heart of your home' },
+];
