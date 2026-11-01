@@ -16,7 +16,8 @@ export function SectionHeading({ eyebrow, title, subtitle, href, linkText = 'Vie
 export function Stars({ rating = 5, small = false }: { rating?: number; small?: boolean }) { return <span className={`stars ${small ? 'stars-small' : ''}`} aria-label={`${rating} out of 5 stars`}>{[1,2,3,4,5].map(n => <Star key={n} size={small ? 12 : 16} fill={n <= Math.round(rating) ? 'currentColor' : 'none'} strokeWidth={1.5} />)}</span>; }
 export function Modal({ title, children, onClose, wide = false, drawer = false }: { title: string; children: ReactNode; onClose: () => void; wide?: boolean; drawer?: boolean }) {
   const panel = useRef<HTMLDivElement>(null);
-  const onCloseRef = useRef(onClose); onCloseRef.current = onClose;
+  const onCloseRef = useRef(onClose);
+  useEffect(() => { onCloseRef.current = onClose; }, [onClose]);
   useEffect(() => {
     const previous = document.activeElement as HTMLElement;
     const oldOverflow = document.body.style.overflow;

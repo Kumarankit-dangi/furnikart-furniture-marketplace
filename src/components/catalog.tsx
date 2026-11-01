@@ -1,7 +1,7 @@
 'use client';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { ArrowRight, ChevronRight, GitCompareArrows, SearchX, SlidersHorizontal, X, Check } from 'lucide-react';
 import { categories } from '@/lib/catalog-data';
 import { money, type Product } from '@/lib/types';
@@ -11,7 +11,13 @@ import { Loading, Modal, Photo } from './ui';
 
 export function Catalog({ initialProducts }: { initialProducts: Product[] }) {
   const params = useSearchParams();
+  const searchString = params.toString();
+  return <CatalogContent key={searchString} initialProducts={initialProducts} searchString={searchString} />;
+}
+
+function CatalogContent({ initialProducts, searchString }: { initialProducts: Product[]; searchString: string }) {
   const { products: storeProducts, loaded, notify } = useStore();
+  const params = new URLSearchParams(searchString);
   const [query, setQuery] = useState(params.get('q') || '');
   const [category, setCategory] = useState(params.get('category') || '');
   const [collection, setCollection] = useState(params.get('collection') || '');
@@ -25,8 +31,6 @@ export function Catalog({ initialProducts }: { initialProducts: Product[] }) {
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [compare, setCompare] = useState<string[]>([]);
   const [compareOpen, setCompareOpen] = useState(false);
-  const searchString = params.toString();
-  useEffect(() => { const next = new URLSearchParams(searchString); setQuery(next.get('q') || ''); setCategory(next.get('category') || ''); setCollection(next.get('collection') || ''); setSeller(next.get('seller') || ''); setSort(next.get('sort') || 'recommended'); setMin(Number(next.get('min')) || 0); setMax(Number(next.get('max')) || 100000); }, [searchString]);
   const products = loaded ? storeProducts : initialProducts;
   const categoryName = categories.find(c => c.slug === category)?.name;
   const collectionNames: Record<string,string> = { new: 'Fresh arrivals. New favourites.', bestsellers: 'Bestsellers, for a reason.', trending: 'The pieces everyone is loving.', deals: 'Beautiful furniture. Even better prices.', premium: 'Considered pieces. Lasting beauty.', 'small-space': 'Small space. Big possibilities.' };

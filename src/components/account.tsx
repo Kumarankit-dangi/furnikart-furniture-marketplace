@@ -1,7 +1,7 @@
 'use client';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useEffect, useState, type FormEvent } from 'react';
+import { useState, type FormEvent } from 'react';
 import { ArrowRight, Check, CheckCircle2, ChevronDown, ChevronRight, Heart, HelpCircle, LogOut, MapPin, Package, Pencil, Plus, ShieldCheck, Trash2, Truck, UserRound } from 'lucide-react';
 import { money, pendingSellerConfirmation, type Address, type Order } from '@/lib/types';
 import { useStore } from './store-provider';
@@ -12,12 +12,11 @@ import { ProductCard } from './product-card';
 export function Account() {
   const params = useSearchParams();
   const { data, products, loaded, busy, action, setModal } = useStore();
-  const [tab, setTab] = useState(params.get('tab') || 'profile');
+  const tab = params.get('tab') || 'profile';
   const [editor, setEditor] = useState<Address | 'new' | null>(null);
   const [expanded, setExpanded] = useState<string | null>(null);
   const router = useRouter();
-  useEffect(() => { setTab(params.get('tab') || 'profile'); }, [params]);
-  function goTab(value: string) { setTab(value); router.replace(`/account?tab=${value}`, { scroll: false }); }
+  function goTab(value: string) { router.replace(`/account?tab=${value}`, { scroll: false }); }
   async function saveProfile(event: FormEvent<HTMLFormElement>) { event.preventDefault(); await action('update-profile', Object.fromEntries(new FormData(event.currentTarget))); }
   async function signOut() { const result = await action('logout'); if (!result.error) router.push('/'); }
   const wishlist = products.filter(p => data.wishlist.includes(p.id));

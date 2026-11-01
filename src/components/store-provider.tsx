@@ -33,7 +33,23 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     } catch (error) { console.error(error); }
     finally { setLoaded(true); }
   }, []);
-  useEffect(() => { void refresh(); }, [refresh]);
+  useEffect(() => {
+    let active = true;
+    async function load() {
+      try {
+        const response = await fetch('/api/store', { cache: 'no-store' });
+        const next = await response.json();
+        if (!response.ok) throw new Error(next.error);
+        if (active) { setData(next); setProducts(next.products); }
+      } catch (error) {
+        if (active) console.error(error);
+      } finally {
+        if (active) setLoaded(true);
+      }
+    }
+    void load();
+    return () => { active = false; };
+  }, []);
   useEffect(() => { if (toast) { const timer = setTimeout(() => setToast(null), 4500); return () => clearTimeout(timer); } }, [toast]);
   const action = useCallback(async (actionName: string, payload: Record<string, unknown> = {}) => {
     setBusy(true);

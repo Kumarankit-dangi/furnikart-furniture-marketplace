@@ -25,7 +25,6 @@ const originAllowed = (request: NextRequest) => {
   const host = request.headers.get('x-forwarded-host') || request.headers.get('host');
   return !origin || new URL(origin).host === host;
 };
-
 export async function GET() {
   try {
     const viewer = await getViewer();
@@ -122,11 +121,13 @@ export async function POST(request: NextRequest) {
       else { await db.insert(wishlistItems).values({ ownerId, productId: product.id }); result = { message: 'Saved for a little later. Added to your wishlist.' }; }
     } else if (action === 'save-address') {
       const data = address(body.address);
-      if (data.isDefault) await db.update(addresses).set({ data: sql`jsonb_set(${addresses.data}, '{isDefault}', 'false'::jsonb)` }).where(eq(addresses.ownerId, ownerId));
-      if (body.id) {
-        const updated = await db.update(addresses).set({ data }).where(and(eq(addresses.ownerId, ownerId), eq(addresses.id, String(body.id)))).returning();
-        assert(updated.length, 'Address not found.');
-      } else await db.insert(addresses).values({ ownerId, data });
+      await db.transaction(async tx => {
+        if (data.isDefault) await tx.update(addresses).set({ data: sql`jsonb_set(${addresses.data}, '{isDefault}', 'false'::jsonb)` }).where(eq(addresses.ownerId, ownerId));
+        if (body.id) {
+          const updated = await tx.update(addresses).set({ data }).where(and(eq(addresses.ownerId, ownerId), eq(addresses.id, String(body.id)))).returning();
+          assert(updated.length, 'Address not found.');
+        } else await tx.insert(addresses).values({ ownerId, data });
+      });
       result = { message: 'Your address has been saved.' };
     } else if (action === 'delete-address') {
       await db.delete(addresses).where(and(eq(addresses.id, String(body.id)), eq(addresses.ownerId, ownerId)));
@@ -165,6 +166,7 @@ export async function POST(request: NextRequest) {
         }
         const orderStatus = orderItems.some(item => item.sellerConfirmationRequired) ? pendingSellerConfirmation : 'Confirmed';
         const [placed] = await tx.insert(orders).values({ number: `FK-${Date.now().toString().slice(-8)}-${randomBytes(2).toString('hex').toUpperCase()}`, ownerId, userId: viewer.user?.id, items: orderItems, address: deliveryAddress, email: mail, subtotal, discount, total: subtotal - discount, coupon: coupon || null, status: orderStatus, tracking: `FKIN${randomBytes(6).toString('hex').toUpperCase()}`, paymentMethod: 'Cash on delivery' }).returning();
+        assert(placed, 'We could not save your order. Please try again.', 500);
         await tx.delete(cartItems).where(eq(cartItems.ownerId, ownerId));
         return placed;
       });

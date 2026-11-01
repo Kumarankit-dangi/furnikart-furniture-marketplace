@@ -1,6 +1,6 @@
 'use client';
 import Link from 'next/link';
-import { useEffect, useState, type FormEvent } from 'react';
+import { useMemo, useState, useSyncExternalStore, type FormEvent } from 'react';
 import { ArrowRight, ArrowUpRight, Check, CheckCircle2, ChevronRight, CreditCard, Heart, Leaf, Mail, RotateCcw, ShieldCheck, Sparkles, Star, Tag, TreePine, Truck, Armchair, Layers, LoaderCircle } from 'lucide-react';
 import type { Product } from '@/lib/types';
 import { categories } from '@/lib/catalog-data';
@@ -9,18 +9,33 @@ import { ProductCard, CollectionCard } from './product-card';
 import { Photo, SectionHeading, Stars } from './ui';
 
 const heroSlides = [
-  { image: '/images/room.jpg', label: 'THE LIVING ROOM EDIT', caption: 'The art of slow living.' },
-  { image: '/images/sofa.jpg', label: 'A LITTLE EVERYDAY LUXURY', caption: 'Made for your kind of home.' },
-  { image: '/images/room.jpg', label: 'LESS, BUT BETTER', caption: 'Find your calm corner.' },
+  { id: 'living-room-edit', image: '/images/room.jpg', label: 'THE LIVING ROOM EDIT', caption: 'The art of slow living.' },
+  { id: 'everyday-luxury', image: '/images/sofa.jpg', label: 'A LITTLE EVERYDAY LUXURY', caption: 'Made for your kind of home.' },
+  { id: 'less-but-better', image: '/images/room.jpg', label: 'LESS, BUT BETTER', caption: 'Find your calm corner.' },
 ];
+function subscribeToRecentProducts(onChange: () => void) {
+  window.addEventListener('storage', onChange);
+  return () => window.removeEventListener('storage', onChange);
+}
+function getRecentProductsSnapshot() {
+  try { return localStorage.getItem('fk-recent') || '[]'; } catch { return '[]'; }
+}
+function getServerRecentProductsSnapshot() {
+  return '[]';
+}
 export function Home({ initialProducts }: { initialProducts: Product[] }) {
   const { action, busy } = useStore();
   const [allCategories, setAllCategories] = useState(false);
   const [tab, setTab] = useState('bestseller');
   const [slide, setSlide] = useState(0);
-  const [recent, setRecent] = useState<string[]>([]);
+  const recentSnapshot = useSyncExternalStore(subscribeToRecentProducts, getRecentProductsSnapshot, getServerRecentProductsSnapshot);
+  const recent = useMemo(() => {
+    try {
+      const parsed: unknown = JSON.parse(recentSnapshot);
+      return Array.isArray(parsed) ? parsed.filter((id): id is string => typeof id === 'string') : [];
+    } catch { return []; }
+  }, [recentSnapshot]);
   const [subscribed, setSubscribed] = useState(false);
-  useEffect(() => { try { setRecent(JSON.parse(localStorage.getItem('fk-recent') || '[]')); } catch { /* Storage is optional. */ } }, []);
   const featured = [...initialProducts].sort((a,b) => b.reviewCount - a.reviewCount).slice(0,4);
   const tabProducts = tab === 'bestseller' ? featured : tab === 'new'
     ? [...initialProducts].sort((a,b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).slice(0,4)
@@ -31,7 +46,7 @@ export function Home({ initialProducts }: { initialProducts: Product[] }) {
   const recentProducts = recent.map(id => initialProducts.find(p => p.id === id)).filter(Boolean) as Product[];
   async function subscribe(event: FormEvent<HTMLFormElement>) { event.preventDefault(); const fields = Object.fromEntries(new FormData(event.currentTarget)); const result = await action('subscribe', fields); if (!result.error) setSubscribed(true); }
   return <main id="main-content">
-    <section className="hero container" aria-label="Welcome to FurniKart"><div className="hero-copy"><div className="eyebrow hero-eyebrow"><span />HOME, BEAUTIFULLY REIMAGINED</div><h1>Furniture That<br />Fits <em>Your Life.</em></h1><p className="hero-subtitle">Discover beautiful, functional furniture for every room and every budget.</p><div className="hero-buttons"><Link href="/shop" className="btn btn-primary">Shop Furniture<ArrowUpRight size={18} /></Link><Link href="#collections" className="btn btn-outline">Explore Collections<ArrowRight size={17} /></Link></div><div className="hero-proof"><div className="avatar-stack"><span>AS</span><span>RK</span><span>PM</span><span><Heart size={12} fill="currentColor" /></span></div><div><Stars small /><p><strong>12,000+</strong> homes. A little more beautiful.</p></div></div></div><div className="hero-media"><Photo src={heroSlides[slide].image} alt="A warm, sunlit living room with a beautiful neutral sofa, natural wood furniture, and thoughtful decor" priority className="hero-photo" sizes="(max-width: 700px) 95vw, 60vw" /><div className="hero-collection-label"><span />{heroSlides[slide].label}</div><div className="hero-dots" aria-label="Choose a home collection">{heroSlides.map((item, index) => <button key={item.image} className={slide === index ? 'active' : ''} onClick={() => setSlide(index)} aria-label={`Show ${item.label.toLowerCase()}`} aria-pressed={slide === index} />)}</div><Link href="/shop?collection=premium" className="hero-caption"><span className="hero-caption-icon"><Leaf size={22} strokeWidth={1.4} /></span><span><small>THOUGHTFULLY CURATED</small><strong>{heroSlides[slide].caption}</strong></span><ArrowUpRight size={18} /></Link></div></section>
+    <section className="hero container" aria-label="Welcome to FurniKart"><div className="hero-copy"><div className="eyebrow hero-eyebrow"><span />HOME, BEAUTIFULLY REIMAGINED</div><h1>Furniture That<br />Fits <em>Your Life.</em></h1><p className="hero-subtitle">Discover beautiful, functional furniture for every room and every budget.</p><div className="hero-buttons"><Link href="/shop" className="btn btn-primary">Shop Furniture<ArrowUpRight size={18} /></Link><Link href="#collections" className="btn btn-outline">Explore Collections<ArrowRight size={17} /></Link></div><div className="hero-proof"><div className="avatar-stack"><span>AS</span><span>RK</span><span>PM</span><span><Heart size={12} fill="currentColor" /></span></div><div><Stars small /><p><strong>12,000+</strong> homes. A little more beautiful.</p></div></div></div><div className="hero-media"><Photo src={heroSlides[slide].image} alt="A warm, sunlit living room with a beautiful neutral sofa, natural wood furniture, and thoughtful decor" priority className="hero-photo" sizes="(max-width: 700px) 95vw, 60vw" /><div className="hero-collection-label"><span />{heroSlides[slide].label}</div><div className="hero-dots" aria-label="Choose a home collection">{heroSlides.map((item, index) => <button key={item.id} className={slide === index ? 'active' : ''} onClick={() => setSlide(index)} aria-label={`Show ${item.label.toLowerCase()}`} aria-pressed={slide === index} />)}</div><Link href="/shop?collection=premium" className="hero-caption"><span className="hero-caption-icon"><Leaf size={22} strokeWidth={1.4} /></span><span><small>THOUGHTFULLY CURATED</small><strong>{heroSlides[slide].caption}</strong></span><ArrowUpRight size={18} /></Link></div></section>
     <section className="benefits container" aria-label="The FurniKart promise">{[{ icon: Truck, title: 'Free delivery & assembly', text: 'From our door to yours, with care.' }, { icon: ShieldCheck, title: 'Quality you can feel', text: 'Made to last. Loved for years.' }, { icon: RotateCcw, title: 'Easy 7-day returns', text: 'A little extra peace of mind.' }, { icon: CreditCard, title: 'Safe & secure shopping', text: 'Your home, in safe hands.' }].map(item => <div className="benefit" key={item.title}><item.icon size={27} strokeWidth={1.4} /><div><h3>{item.title}</h3><p>{item.text}</p></div></div>)}</section>
     <section className="container section-block category-section"><SectionHeading title="A little something for every room." subtitle="Find your perfect piece. Make yourself at home." ><button className="text-link" onClick={() => setAllCategories(!allCategories)}>{allCategories ? 'Show fewer categories' : 'View all categories'}<ArrowUpRight size={17} /></button></SectionHeading><div className={`categories-grid ${allCategories ? 'categories-expanded' : ''}`}>{categories.slice(0, allCategories ? 14 : 7).map((category, index) => <Link key={category.slug} href={`/shop?category=${category.slug}`} className="category-card"><div className="category-image"><Photo src={category.image} alt={category.name} /><span><ArrowUpRight size={18} /></span></div><h3>{category.name}</h3><small>{category.caption}</small></Link>)}</div></section>
     <section className="container section-block bestsellers-section"><SectionHeading eyebrow="THE MOST-LOVED EDIT" title="Bestsellers, for a reason." subtitle="Beautiful pieces. Everyday favourites. Yours to fall in love with." href={`/shop?collection=${tab === 'bestseller' ? 'bestsellers' : tab}`} /><div className="featured-tabs" role="tablist" aria-label="Featured furniture edits">{[{ id: 'bestseller', label: 'Bestsellers' }, { id: 'trending', label: 'Trending now' }, { id: 'new', label: 'New arrivals' }].map(item => <button key={item.id} onClick={() => setTab(item.id)} className={tab === item.id ? 'active' : ''} role="tab" aria-selected={tab === item.id}>{item.id === 'trending' && <Sparkles size={13} />}{item.label}</button>)}</div><div className="product-grid">{tabProducts.map((product, i) => <ProductCard key={product.id} product={product} index={i} />)}</div></section>
