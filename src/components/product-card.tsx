@@ -11,7 +11,7 @@ export function ProductCard({ product, index = 0 }: { product: Product; index?: 
   const saved = data.wishlist.includes(product.id);
   return <article className="product-card" style={{ animationDelay: `${Math.min(index, 7) * 45}ms` }}>
     <div className="product-media">
-      <Link href={`/product/${product.slug}`} aria-label={`View ${product.name}`} className="product-image-link"><Photo src={product.images[0]} alt={product.name} /></Link>
+      <Link href={`/product/${product.slug}`} aria-label={`View ${product.name}`} className="product-image-link"><Photo src={product.images[0]} alt={product.name} sizes="(max-width: 700px) 45vw, (max-width: 1100px) 30vw, 22vw" /></Link>
       {product.badge && <span className={`product-badge ${product.badge === 'New arrival' ? 'badge-green' : ''}`}>{product.badge}</span>}
       <button className={`wish-button ${saved ? 'is-saved' : ''}`} onClick={() => toggleWish(product.id)} disabled={busy} aria-label={saved ? `Remove ${product.name} from wishlist` : `Save ${product.name} to wishlist`} aria-pressed={saved}><Heart size={17} strokeWidth={1.6} fill={saved ? 'currentColor' : 'none'} /></button>
       <button className="quick-add" disabled={busy || !canPurchaseProduct(product)} onClick={() => addCart(product, undefined, undefined, 1, true)} aria-label={`Add ${product.name} to bag`}><Plus size={17} /><span>{canPurchaseProduct(product) ? 'Quick add' : 'Sold out'}</span></button>

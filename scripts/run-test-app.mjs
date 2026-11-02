@@ -5,6 +5,11 @@ import dotenv from "dotenv";
 import { assertTestDatabaseTarget } from "../src/db/test-target.mjs";
 
 const projectRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
+const host = process.env.FURNIKART_TEST_HOST || "127.0.0.1";
+if (host !== "127.0.0.1" && host !== "0.0.0.0") {
+  throw new Error("FURNIKART_TEST_HOST must be 127.0.0.1 or 0.0.0.0.");
+}
+
 const loaded = dotenv.config({
   path: join(projectRoot, ".env.test.local"),
   override: true,
@@ -40,7 +45,7 @@ for (const key of Object.keys(childEnv)) {
 const nextCli = join(projectRoot, "node_modules", "next", "dist", "bin", "next");
 const child = spawn(
   process.execPath,
-  [nextCli, "dev", "--webpack", "--hostname", "127.0.0.1", "--port", "3020"],
+  [nextCli, "dev", "--webpack", "--hostname", host, "--port", "3020"],
   { cwd: projectRoot, env: childEnv, stdio: "inherit", detached: false },
 );
 

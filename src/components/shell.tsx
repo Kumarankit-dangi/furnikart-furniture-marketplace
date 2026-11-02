@@ -1,7 +1,7 @@
 'use client';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { useState, type FormEvent, type ReactNode } from 'react';
+import { useEffect, useState, type FormEvent, type ReactNode } from 'react';
 import { ArrowRight, ArrowUpRight, Armchair, Check, CheckCircle2, ChevronDown, Heart, MapPin, Menu, Minus, Plus, Search, ShieldCheck, ShoppingBag, Sparkles, Tag, Trash2, Truck, UserRound, X, Camera, MessageCircle, BriefcaseBusiness, LockKeyhole, LoaderCircle, Mail } from 'lucide-react';
 import { categories } from '@/lib/catalog-data';
 import { money, productQuantityLimit, totals, variantPrice } from '@/lib/types';
@@ -20,6 +20,38 @@ function Header({ query, setQuery }: { query: string; setQuery: (query: string) 
   const [mobileMenu, setMobileMenu] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
+  useEffect(() => {
+    const trigger = document.querySelector<HTMLButtonElement>('.mobile-menu-button');
+    trigger?.setAttribute('aria-expanded', String(mobileMenu));
+    trigger?.setAttribute('aria-label', mobileMenu ? 'Close navigation' : 'Open navigation');
+    if (!mobileMenu) return;
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    const handleClick = (event: MouseEvent) => {
+      if (!(event.target instanceof Element)) return;
+      if (event.target.closest('.mobile-nav, .mobile-menu-button')) {
+        if (event.target.closest('.mobile-nav a, .mobile-nav button')) setMobileMenu(false);
+        return;
+      }
+      setMobileMenu(false);
+    };
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setMobileMenu(false);
+    };
+    const handleResize = () => {
+      if (window.innerWidth > 760) setMobileMenu(false);
+    };
+    document.addEventListener('click', handleClick);
+    document.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('resize', handleResize);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.removeEventListener('click', handleClick);
+      document.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('resize', handleResize);
+    };
+  }, [mobileMenu]);
   function setMenuPath(path: string | null) { setMenuOpen(path !== null); }
   function setMobileMenuPath(path: string | null) { setMobileMenu(path !== null); }
   function search(event: FormEvent) { event.preventDefault(); if (query.trim()) router.push(`/shop?q=${encodeURIComponent(query.trim())}`); else router.push('/shop'); setMenuOpen(false); }
