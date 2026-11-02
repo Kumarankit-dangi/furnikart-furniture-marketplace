@@ -118,7 +118,7 @@ export async function POST(request: NextRequest) {
       assert(product, 'Product not found.');
       const [existing] = await db.select().from(wishlistItems).where(and(eq(wishlistItems.ownerId, ownerId), eq(wishlistItems.productId, product.id)));
       if (existing) { await db.delete(wishlistItems).where(and(eq(wishlistItems.ownerId, ownerId), eq(wishlistItems.productId, product.id))); result = { message: 'Removed from your wishlist.' }; }
-      else { await db.insert(wishlistItems).values({ ownerId, productId: product.id }); result = { message: 'Saved for a little later. Added to your wishlist.' }; }
+      else { await db.insert(wishlistItems).values({ ownerId, productId: product.id }).onConflictDoNothing(); result = { message: 'Saved for a little later. Added to your wishlist.' }; }
     } else if (action === 'save-address') {
       const data = address(body.address);
       await db.transaction(async tx => {

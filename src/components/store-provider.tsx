@@ -68,7 +68,14 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     if (!result.error && open) setCartOpen(true);
     return !result.error;
   }, [action]);
-  const toggleWish = useCallback(async (productId: string) => { await action('wishlist', { productId }); }, [action]);
+  const toggleWish = useCallback(async (productId: string) => {
+    const wasSaved = data.wishlist.includes(productId);
+    setData(current => ({ ...current, wishlist: wasSaved ? current.wishlist.filter(id => id !== productId) : [...current.wishlist, productId] }));
+    const result = await action('wishlist', { productId });
+    if (result.error) {
+      setData(current => ({ ...current, wishlist: wasSaved ? current.wishlist.includes(productId) ? current.wishlist : [...current.wishlist, productId] : current.wishlist.filter(id => id !== productId) }));
+    }
+  }, [action, data.wishlist]);
   return <StoreContext.Provider value={{ data, products, loaded, busy, refresh, action, addCart, toggleWish, modal, setModal, cartOpen, setCartOpen, toast, notify }}>{children}</StoreContext.Provider>;
 }
 export function useStore() { const store = useContext(StoreContext); if (!store) throw new Error('StoreProvider is required.'); return store; }
